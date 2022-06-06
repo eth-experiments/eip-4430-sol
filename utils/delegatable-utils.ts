@@ -31,49 +31,49 @@ export function signDelegation(
 }
 
 type SignedInvocation = {
-    signature: any;
-    invocations: any;
-  };
+  signature: any;
+  invocations: any;
+};
 
 export function signInvocation(
-    signedDelegation: any,
-    transaction: any,
-    contract: Contract,
-    contractName: string,
-    pk: string
-  ): SignedInvocation {
-    const delegatePrivateKey = fromHexString(pk);
-      const invocationMessage = {
-        replayProtection: {
-          nonce: '0x01',
-          queue: '0x00',
+  signedDelegation: any,
+  transaction: any,
+  contract: Contract,
+  contractName: string,
+  pk: string
+): SignedInvocation {
+  const delegatePrivateKey = fromHexString(pk);
+  const invocationMessage = {
+    replayProtection: {
+      nonce: "0x01",
+      queue: "0x00",
+    },
+    batch: [
+      {
+        authority: [signedDelegation],
+        transaction: {
+          to: contract.address,
+          gasLimit: "10000000000000000",
+          data: transaction.data,
         },
-        batch: [
-          {
-            authority: [signedDelegation],
-            transaction: {
-              to: contract.address,
-              gasLimit: '10000000000000000',
-              data: transaction.data,
-            },
-          },
-        ],
-      };
-      const typedInvocationMessage = createTypedMessage(
-        contract,
-        invocationMessage,
-        'Invocations',
-        contractName,
-      );
+      },
+    ],
+  };
+  const typedInvocationMessage = createTypedMessage(
+    contract,
+    invocationMessage,
+    "Invocations",
+    contractName
+  );
 
-      const invocationSig = sigUtil.signTypedData_v4(
-        delegatePrivateKey as Buffer,
-        typedInvocationMessage,
-      );
-      const signedInvocation = {
-        signature: invocationSig,
-        invocations: invocationMessage,
-      };
+  const invocationSig = sigUtil.signTypedData_v4(
+    delegatePrivateKey as Buffer,
+    typedInvocationMessage
+  );
+  const signedInvocation = {
+    signature: invocationSig,
+    invocations: invocationMessage,
+  };
 
-    return signedInvocation;
-  }
+  return signedInvocation;
+}

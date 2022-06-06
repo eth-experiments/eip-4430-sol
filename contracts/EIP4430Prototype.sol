@@ -147,17 +147,11 @@ contract EIP4430Prototype is Ownable, Delegatable {
     _removePublisher(rootPublisher);
   }
 
-  function revokeDelegationAuthority(address rootPublisher)
-    external
-    onlyOwner
-  {
+  function revokeDelegationAuthority(address rootPublisher) external onlyOwner {
     _revokeDelegationAuthority(rootPublisher);
   }
 
-  function unrevokeDelegationAuthority(address rootPublisher)
-    external
-    onlyOwner
-  {
+  function unrevokeDelegationAuthority(address rootPublisher) external onlyOwner {
     _unrevokeDelegationAuthority(rootPublisher);
   }
 
@@ -179,11 +173,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
     return AUTHORIZED_ROOT_PUBLISHERS[rootPublisher];
   }
 
-  function isAuthorizedToDelegate(address rootPublisher)
-    external
-    view
-    returns (bool)
-  {
+  function isAuthorizedToDelegate(address rootPublisher) external view returns (bool) {
     return
       AUTHORIZED_ROOT_PUBLISHERS[rootPublisher] && !REVOKED_DELEGATION_AUTHORITY[rootPublisher];
   }

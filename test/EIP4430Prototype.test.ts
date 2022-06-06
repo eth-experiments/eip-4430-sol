@@ -82,7 +82,6 @@ describe(CONTRACT_NAME, function () {
    * 3. emit `RootPublisherAdded` event
    */
   describe('setContractMethodMetadata(address target, bytes4 method, bytes4 language, string calldata data)', () => {
-
     // TEST 1
     it('should SUCCEED to EXECUTE from ROOT publisher', async () => {
       const target = '0x0000000000000000000000000000000000000001';
@@ -90,9 +89,10 @@ describe(CONTRACT_NAME, function () {
       const language = '0x01010101';
       const data = 'A public goods API endpoint';
       const contract = EIP4430Prototype.connect(wallet1);
-      await expect(
-        contract.setContractMethodMetadata(target, method, language, data),
-      ).to.emit(EIP4430Prototype, 'ContractUpdated');
+      await expect(contract.setContractMethodMetadata(target, method, language, data)).to.emit(
+        EIP4430Prototype,
+        'ContractUpdated',
+      );
       const metadata = await EIP4430Prototype.getContractMethodMetadata(target, method, language);
       expect(metadata.description).to.eql(data);
     });
@@ -100,8 +100,13 @@ describe(CONTRACT_NAME, function () {
     // TEST 2
     it('should SUCCEED to INVOKE from a BRANCH publisher', async () => {
       // Step 1: Sign Delegation
-      const signedDelegation = signDelegation(wallet2.address, EIP4430Prototype, CONTRACT_NAME, account1PrivKey);
-      
+      const signedDelegation = signDelegation(
+        wallet2.address,
+        EIP4430Prototype,
+        CONTRACT_NAME,
+        account1PrivKey,
+      );
+
       // Step 2: Generate Invocation from Delegation & Desired Transaction
       const target = '0x0000000000000000000000000000000000000001';
       const method = '0xa9059cbb';
@@ -113,20 +118,31 @@ describe(CONTRACT_NAME, function () {
         method,
         language,
         description,
-      )
-      const signedInvocation = signInvocation(signedDelegation, desiredTx, EIP4430Prototype, CONTRACT_NAME, account2PrivKey);
-      
+      );
+      const signedInvocation = signInvocation(
+        signedDelegation,
+        desiredTx,
+        EIP4430Prototype,
+        CONTRACT_NAME,
+        account2PrivKey,
+      );
+
       // Step 3: Dispatch Invocation from Third-Party Wallet
       await EIP4430Prototype.invoke([signedInvocation]);
       const metadata = await EIP4430Prototype.getContractMethodMetadata(target, method, language);
       expect(metadata.description).to.eql(description);
     });
-   
+
     // TEST 3
     it('should REVERT due to REVOKED delegation AUTHORIZATION.', async () => {
       // Step 1: Sign Delegation
-      const signedDelegation = signDelegation(wallet2.address, EIP4430Prototype, CONTRACT_NAME, account1PrivKey);
-      
+      const signedDelegation = signDelegation(
+        wallet2.address,
+        EIP4430Prototype,
+        CONTRACT_NAME,
+        account1PrivKey,
+      );
+
       // Step 2: Generate Invocation from Delegation & Desired Transaction
       const target = '0x0000000000000000000000000000000000000001';
       const method = '0xa9059cbb';
@@ -138,21 +154,28 @@ describe(CONTRACT_NAME, function () {
         method,
         language,
         description,
-      )
-      const signedInvocation = signInvocation(signedDelegation, desiredTx, EIP4430Prototype, CONTRACT_NAME, account2PrivKey);
-      
+      );
+      const signedInvocation = signInvocation(
+        signedDelegation,
+        desiredTx,
+        EIP4430Prototype,
+        CONTRACT_NAME,
+        account2PrivKey,
+      );
+
       // Step 3: Revoke Delegation
       await EIP4430Prototype.revokeDelegationAuthority(wallet1.address);
 
       // Step 4: Dispatch Invocation from Third-Party Wallet
-      const contract = EIP4430Prototype.connect(wallet2)
-      await expect(EIP4430Prototype.invoke([signedInvocation])).to.be.revertedWith("Delegator execution failed")
+      const contract = EIP4430Prototype.connect(wallet2);
+      await expect(EIP4430Prototype.invoke([signedInvocation])).to.be.revertedWith(
+        'Delegator execution failed',
+      );
     });
-
 
     // TEST 4
     it('should REVERT due to UNAUTHORIZED access', async () => {
-      const contract = EIP4430Prototype.connect(wallet2)
+      const contract = EIP4430Prototype.connect(wallet2);
       expect(contract.addPublisher(wallet2.address)).to.be.revertedWith(
         'Ownable: caller is not the owner',
       );
