@@ -31,7 +31,7 @@ describe(CONTRACT_NAME, function () {
   describe('encodeKey(uint16 chainId, address contractAddress, bytes4 method)', () => {
     it('should SUCCEED to encode a lookup key', async () => {
       const key = await EIP4430Prototype.encodeLookupKey(1, wallet1.address, '0x12345678');
-      expect(key).to.equal('0xce7a8a69edfee23e')
+      expect(key).to.equal('0xce7a8a69edfee23e');
     });
   });
 
@@ -95,7 +95,7 @@ describe(CONTRACT_NAME, function () {
       const method = '0xa9059cbb';
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
-      const inputs = ["test", "test2"];
+      const inputs = ['test', 'test2'];
       const contract = EIP4430Prototype.connect(wallet1);
       await expect(contract.update(chainId, target, method, language, description, inputs)).to.emit(
         EIP4430Prototype,
@@ -121,7 +121,7 @@ describe(CONTRACT_NAME, function () {
       const method = '0xa9059cbb';
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
-      const inputs = ["test", "test2"];
+      const inputs = ['test', 'test2'];
 
       const desiredTx = await EIP4430Prototype.populateTransaction.update(
         chainId,
@@ -161,7 +161,7 @@ describe(CONTRACT_NAME, function () {
       const method = '0xa9059cbb';
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
-      const inputs = ["test", "test2"];
+      const inputs = ['test', 'test2'];
 
       const desiredTx = await EIP4430Prototype.populateTransaction.update(
         chainId,

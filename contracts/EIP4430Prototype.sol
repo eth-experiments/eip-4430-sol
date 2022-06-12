@@ -84,7 +84,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
    * @param method Function signature in the form of a string
    * @param description Method description for general audience keyed by language.
    * @param inputs List of method input descriptions for a general audience keyed by language.
-  */
+   */
   struct Metadata {
     string method; // deposit(uint256 amount, uint256 to)
     mapping(bytes4 => string) description; // language => description
@@ -131,7 +131,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
   // -----------------------------------------
   // Constructor
   // -----------------------------------------
-  constructor(address ) Delegatable("EIP4430Prototype", "1") {
+  constructor(address) Delegatable("EIP4430Prototype", "1") {
     APPROVED_LANGUAGES[bytes4("EN")] = true;
     APPROVED_LANGUAGES[0x01010101] = true;
   }
@@ -221,7 +221,11 @@ contract EIP4430Prototype is Ownable, Delegatable {
     return (methodName, description, inputs);
   }
 
-  function encodeLookupKey(uint8 chainId, address contractAddress, bytes4 method) external view returns (bytes8) {
+  function encodeLookupKey(
+    uint8 chainId,
+    address contractAddress,
+    bytes4 method
+  ) external view returns (bytes8) {
     return _encodeLookupKey(chainId, contractAddress, method);
   }
 
@@ -229,7 +233,11 @@ contract EIP4430Prototype is Ownable, Delegatable {
   /* Internal Functions                                                               */
   /* ================================================================================ */
 
-  function _encodeLookupKey(uint8 chainId, address contractAddress, bytes4 method) internal view returns (bytes8) {
+  function _encodeLookupKey(
+    uint8 chainId,
+    address contractAddress,
+    bytes4 method
+  ) internal view returns (bytes8) {
     return bytes8(keccak256(abi.encodePacked(chainId, contractAddress, method)));
   }
 
