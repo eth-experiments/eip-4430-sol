@@ -55,9 +55,7 @@ function publishContract(contractName, networkName) {
 
     return true;
   } catch (e) {
-    console.log(
-      "Failed to publish " + chalk.red(contractName) + " to the subgraph."
-    );
+    console.log("Failed to publish " + chalk.red(contractName) + " to the subgraph.");
     console.log(e);
     return false;
   }

@@ -165,7 +165,7 @@ contract EIP4430Prototype is RevokableOwnableDelegatable {
     bytes4 methodId,
     bytes4 language,
     string calldata method
-  ) external isAuthorized {
+  ) external onlyOwner {
     require(APPROVED_LANGUAGES[language], "EIP4430Prototype:language-not-supported");
     bytes8 key = _encodeLookupKey(chainId, target, methodId);
     metadata[key].method = method;
@@ -178,7 +178,7 @@ contract EIP4430Prototype is RevokableOwnableDelegatable {
     bytes4 language,
     string calldata description,
     string[] calldata inputs
-  ) external isAuthorized {
+  ) external onlyOwner {
     require(APPROVED_LANGUAGES[language], "EIP4430Prototype:language-not-supported");
     bytes8 key = _encodeLookupKey(chainId, target, methodId);
     metadata[key].description[language] = description;

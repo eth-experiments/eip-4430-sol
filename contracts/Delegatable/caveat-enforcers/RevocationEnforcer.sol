@@ -5,8 +5,8 @@ import "./CaveatEnforcer.sol";
 import "../Delegatable.sol";
 
 abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
-
   mapping(bytes32 => bool) isRevoked;
+
   function enforceCaveat(
     bytes calldata terms,
     Transaction calldata transaction,
@@ -28,23 +28,25 @@ abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
     isRevoked[delegationHash] = true;
   }
 
-  function verifyIntentionToRevokeSignature(
-    SignedIntentionToRevoke memory signedIntentionToRevoke
-  ) public view returns (address) {
+  function verifyIntentionToRevokeSignature(SignedIntentionToRevoke memory signedIntentionToRevoke)
+    public
+    view
+    returns (address)
+  {
     IntentionToRevoke memory intentionToRevoke = signedIntentionToRevoke.intentionToRevoke;
     bytes32 sigHash = getIntentionToRevokeTypedDataHash(intentionToRevoke);
     address recoveredSignatureSigner = recover(sigHash, signedIntentionToRevoke.signature);
     return recoveredSignatureSigner;
   }
 
-  function getIntentionToRevokeTypedDataHash(
-    IntentionToRevoke memory intentionToRevoke
-  ) public view returns (bytes32) {
-    bytes32 digest = keccak256(abi.encodePacked(
-      "\x19\x01",
-      domainHash,
-      GET_INTENTIONTOREVOKE_PACKETHASH(intentionToRevoke)
-    ));
+  function getIntentionToRevokeTypedDataHash(IntentionToRevoke memory intentionToRevoke)
+    public
+    view
+    returns (bytes32)
+  {
+    bytes32 digest = keccak256(
+      abi.encodePacked("\x19\x01", domainHash, GET_INTENTIONTOREVOKE_PACKETHASH(intentionToRevoke))
+    );
     return digest;
   }
 
@@ -52,8 +54,8 @@ abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
    * This is boilerplate that must be added to any Delegatable contract if it also inherits
    * from another class that also implements _msgSender().
    */
-  function _msgSender () internal view override(Delegatable) returns (address sender) {
-    if(msg.sender == address(this)) {
+  function _msgSender() internal view override(Delegatable) returns (address sender) {
+    if (msg.sender == address(this)) {
       bytes memory array = msg.data;
       uint256 index = msg.data.length;
       assembly {

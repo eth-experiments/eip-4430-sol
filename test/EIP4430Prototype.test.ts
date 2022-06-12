@@ -7,13 +7,8 @@ const { generateUtil } = require('eth-delegatable-utils');
 const friendlyTypes = require('../types');
 const { getSigners } = ethers;
 const sigUtil = require('eth-sig-util');
-const {
-  TypedDataUtils,
-} = sigUtil;
-const {
-  typedSignatureHash,
-  encodeData,
-} = TypedDataUtils;
+const { TypedDataUtils } = sigUtil;
+const { typedSignatureHash, encodeData } = TypedDataUtils;
 
 const CONTRACT_NAME = 'EIP4430Prototype';
 const account0PrivKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
@@ -109,8 +104,7 @@ describe(CONTRACT_NAME, function () {
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
       const inputs = ['test', 'test2'];
-      const contract = EIP4430Prototype.connect(wallet1);
-      await expect(contract.update(chainId, target, method, language, description, inputs)).to.emit(
+      await expect(EIP4430Prototype.update(chainId, target, method, language, description, inputs)).to.emit(
         EIP4430Prototype,
         'ContractUpdated',
       );
@@ -120,7 +114,6 @@ describe(CONTRACT_NAME, function () {
 
     // TEST 2
     it('should SUCCEED to INVOKE from a BRANCH publisher', async () => {
-
       const chainId = 1;
       const target = '0x0000000000000000000000000000000000000001';
       const method = '0xa9059cbb';
@@ -131,8 +124,8 @@ describe(CONTRACT_NAME, function () {
       const utilOpts = {
         chainId,
         verifyingContract: EIP4430Prototype.address,
-        name: CONTRACT_NAME,      
-      }
+        name: CONTRACT_NAME,
+      };
       const util = generateUtil(utilOpts);
       const delegation = {
         delegate: wallet1.address,
@@ -140,8 +133,6 @@ describe(CONTRACT_NAME, function () {
         caveats: [],
       };
       const signedDelegation = util.signDelegation(delegation, account0PrivKey);
-
-      // Step 2: Generate Invocation from Delegation & Desired Transaction
       const desiredTx = await EIP4430Prototype.populateTransaction.update(
         chainId,
         target,
@@ -150,21 +141,24 @@ describe(CONTRACT_NAME, function () {
         description,
         inputs,
       );
+
       const invocationMessage = {
         replayProtection: {
           nonce: '0x01',
           queue: '0x00',
         },
-        batch: [{
-          authority: [signedDelegation],
-          transaction: {
-            to: EIP4430Prototype.address,
-            gasLimit: '10000000000000000',
-            data: desiredTx.data,
+        batch: [
+          {
+            authority: [signedDelegation],
+            transaction: {
+              to: EIP4430Prototype.address,
+              gasLimit: '10000000000000000',
+              data: desiredTx.data,
+            },
           },
-        }],
+        ],
       };
-      const signedInvocation= util.signInvocation(invocationMessage, account1PrivKey);
+      const signedInvocation = util.signInvocation(invocationMessage, account1PrivKey);
 
       // Step 3: Dispatch Invocation from Third-Party Wallet
       await EIP4430Prototype.invoke([signedInvocation]);
@@ -173,7 +167,7 @@ describe(CONTRACT_NAME, function () {
     });
 
     // TEST 3
-    it.skip('should REVERT due to REVOKED delegation AUTHORIZATION.', async () => {
+    it('should REVERT due to REVOKED delegation AUTHORIZATION.', async () => {
       // Step 1: Sign Delegation
       const signedDelegation = signDelegation(
         wallet2.address,
@@ -181,8 +175,6 @@ describe(CONTRACT_NAME, function () {
         CONTRACT_NAME,
         account1PrivKey,
       );
-
-      
 
       // Step 2: Generate Invocation from Delegation & Desired Transaction
       const chainId = 1;
@@ -192,23 +184,25 @@ describe(CONTRACT_NAME, function () {
       const description = 'A public goods API endpoint';
       const inputs = ['test', 'test2'];
 
-
       // REVOKE
       const utilOpts = {
         chainId,
         verifyingContract: EIP4430Prototype.address,
-        name: CONTRACT_NAME,      
-      }
+        name: CONTRACT_NAME,
+      };
       const util = generateUtil(utilOpts);
       // Owner revokes outstanding delegation
       const intentionToRevoke = {
-        delegationHash: TypedDataUtils.hashStruct('SignedDelegation', signedDelegation, types, true)
-      }
+        delegationHash: TypedDataUtils.hashStruct(
+          'SignedDelegation',
+          signedDelegation,
+          types,
+          true,
+        ),
+      };
       const SignedIntentionToRevoke = util.signRevocation(intentionToRevoke, account1PrivKey);
-      console.log(SignedIntentionToRevoke, 'SignedIntentionToRevoke')
+      console.log(SignedIntentionToRevoke, 'SignedIntentionToRevoke');
       await EIP4430Prototype.revokeDelegation(signedDelegation, SignedIntentionToRevoke);
-
-
 
       const desiredTx = await EIP4430Prototype.populateTransaction.update(
         chainId,
@@ -246,15 +240,14 @@ describe(CONTRACT_NAME, function () {
   });
 });
 
-function signTypedDataify (friendlyTypes: any) {
+function signTypedDataify(friendlyTypes: any) {
   const types = {};
   Object.keys(friendlyTypes).forEach((typeName: string) => {
     const type = friendlyTypes[typeName];
     // @ts-ignore
     types[typeName] = [];
-    
-    Object.keys(friendlyTypes[typeName]).forEach(subTypeName => {
-      
+
+    Object.keys(friendlyTypes[typeName]).forEach((subTypeName) => {
       const subType = friendlyTypes[typeName][subTypeName];
       // @ts-ignore
       types[typeName].push({

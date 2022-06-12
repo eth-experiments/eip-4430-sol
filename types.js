@@ -1,4 +1,4 @@
-const hardTypes = require('./utils/types');
+const hardTypes = require("./utils/types");
 
 const easyTypes = {};
 
