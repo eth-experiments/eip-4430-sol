@@ -68,21 +68,24 @@ contract EIP4430Prototype is Ownable, Delegatable {
   */
   mapping(address => bool) private REVOKED_DELEGATION_AUTHORITY;
 
-  mapping(bytes4 => bool) private LANGUAGES;
+  /**
+    @notice Languages approved for use by publishers.
+    -------------------------------
+    | Language    	| Restricted 	|
+    |-------------	|------------	|
+    | 0x01010101 	  | FALSE      	|
+    | 0x02020202 	  | TRUE       	|
+    -------------------------------
+  */
+  mapping(bytes4 => bool) private APPROVED_LANGUAGES;
 
   /**
    * @notice Smart Contract method metadata
    * @param method Function signature in the form of a string
-   * @param description Side-effects of the function in multiple languages.
-   * @param inputs Descriptions of the function inputs.
-            -------------------------------------------------------------
-            | Language (Hashed) 	| Effect                             	|
-            |-------------------	|------------------------------------	|
-            | EN                	| The transaction causes X to happen 	|
-            | ES                	| La transacción hace que suceda X   	|
-            -------------------------------------------------------------
-  */
-  struct MethodMetadata {
+   * @param description Method description for general audience keyed by language.
+   * @param inputs List of method input descriptions for a general audience keyed by language.
+   */
+  struct Metadata {
     string method; // deposit(uint256 amount, uint256 to)
     mapping(bytes4 => string) description; // language => description
     mapping(bytes4 => string[]) inputs; // language => method input descriptions
@@ -97,7 +100,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
    | 0x000...000 	| 0x00f714ce 	| {data}   	|
    ------------------------------------------
    */
-  mapping(address => mapping(bytes4 => MethodMetadata)) private metadata;
+  mapping(bytes8 => Metadata) private metadata;
 
   mapping(address => bool) private CONTRACTS;
 
@@ -128,9 +131,9 @@ contract EIP4430Prototype is Ownable, Delegatable {
   // -----------------------------------------
   // Constructor
   // -----------------------------------------
-  constructor(address owner) Delegatable("EIP4430Prototype", "1") {
-    LANGUAGES[bytes4("EN")] = true;
-    LANGUAGES[0x01010101] = true;
+  constructor(address) Delegatable("EIP4430Prototype", "1") {
+    APPROVED_LANGUAGES[bytes4("EN")] = true;
+    APPROVED_LANGUAGES[0x01010101] = true;
   }
 
   /* ================================================================================ */
@@ -156,15 +159,33 @@ contract EIP4430Prototype is Ownable, Delegatable {
     _unrevokeDelegationAuthority(rootPublisher);
   }
 
-  function setContractMethodMetadata(
+  function create(
+    uint8 chainId,
     address target,
-    bytes4 method,
+    bytes4 methodId,
     bytes4 language,
-    string calldata data
+    string calldata method
   ) external isAuthorized {
-    require(LANGUAGES[language], "EIP4430Prototype:language-not-supported");
-    metadata[target][method].description[language] = data;
-    emit ContractUpdated(target, method, language, data);
+    require(APPROVED_LANGUAGES[language], "EIP4430Prototype:language-not-supported");
+    bytes8 key = _encodeLookupKey(chainId, target, methodId);
+    metadata[key].method = method;
+  }
+
+  function update(
+    uint8 chainId,
+    address target,
+    bytes4 methodId,
+    bytes4 language,
+    string calldata description,
+    string[] calldata inputs
+  ) external isAuthorized {
+    require(APPROVED_LANGUAGES[language], "EIP4430Prototype:language-not-supported");
+    bytes8 key = _encodeLookupKey(chainId, target, methodId);
+    metadata[key].description[language] = description;
+    for (uint256 index = 0; index < inputs.length; index++) {
+      metadata[key].inputs[language].push(inputs[index]);
+    }
+    emit ContractUpdated(target, methodId, language, description);
   }
 
   // -----------------------------------------
@@ -179,7 +200,8 @@ contract EIP4430Prototype is Ownable, Delegatable {
       AUTHORIZED_ROOT_PUBLISHERS[rootPublisher] && !REVOKED_DELEGATION_AUTHORITY[rootPublisher];
   }
 
-  function getContractMethodMetadata(
+  function lookupMetadata(
+    uint8 chainId,
     address target,
     bytes4 method,
     bytes4 language
@@ -192,15 +214,32 @@ contract EIP4430Prototype is Ownable, Delegatable {
       string[] memory inputs
     )
   {
-    string memory methodName = metadata[target][method].method;
-    string memory description = metadata[target][method].description[language];
-    string[] memory inputs = metadata[target][method].inputs[language];
+    bytes8 methodId = _encodeLookupKey(chainId, target, method);
+    string memory methodName = metadata[methodId].method;
+    string memory description = metadata[methodId].description[language];
+    string[] memory inputs = metadata[methodId].inputs[language];
     return (methodName, description, inputs);
+  }
+
+  function encodeLookupKey(
+    uint8 chainId,
+    address contractAddress,
+    bytes4 method
+  ) external view returns (bytes8) {
+    return _encodeLookupKey(chainId, contractAddress, method);
   }
 
   /* ================================================================================ */
   /* Internal Functions                                                               */
   /* ================================================================================ */
+
+  function _encodeLookupKey(
+    uint8 chainId,
+    address contractAddress,
+    bytes4 method
+  ) internal view returns (bytes8) {
+    return bytes8(keccak256(abi.encodePacked(chainId, contractAddress, method)));
+  }
 
   function _addPublisher(address _rootPublisher) internal {
     AUTHORIZED_ROOT_PUBLISHERS[_rootPublisher] = true;
