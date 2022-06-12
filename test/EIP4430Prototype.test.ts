@@ -104,10 +104,9 @@ describe(CONTRACT_NAME, function () {
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
       const inputs = ['test', 'test2'];
-      await expect(EIP4430Prototype.update(chainId, target, method, language, description, inputs)).to.emit(
-        EIP4430Prototype,
-        'ContractUpdated',
-      );
+      await expect(
+        EIP4430Prototype.update(chainId, target, method, language, description, inputs),
+      ).to.emit(EIP4430Prototype, 'ContractUpdated');
       const metadata = await EIP4430Prototype.lookupMetadata(chainId, target, method, language);
       expect(metadata.description).to.eql(description);
     });

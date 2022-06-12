@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 import "./CaveatEnforcer.sol";
 import "../Delegatable.sol";
 
-abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
+abstract contract AbstractRevocationEnforcer is CaveatEnforcer, Delegatable {
   constructor(string memory name) Delegatable(name, "1") {}
 
   mapping(bytes32 => bool) isRevoked;
