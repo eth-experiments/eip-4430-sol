@@ -6,7 +6,6 @@ import { signDelegation, signInvocation } from '../utils/delegatable-utils';
 const { getSigners } = ethers;
 
 const CONTRACT_NAME = 'EIP4430Prototype';
-const account0PrivKey = 'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 const account1PrivKey = '59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
 const account2PrivKey = '5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a';
 
@@ -27,6 +26,13 @@ describe(CONTRACT_NAME, function () {
   beforeEach(async () => {
     EIP4430Prototype = await EIP4430PrototypeFactory.deploy(wallet0.address);
     await EIP4430Prototype.addPublisher(wallet1.address);
+  });
+
+  describe('encodeKey(uint16 chainId, address contractAddress, bytes4 method)', () => {
+    it('should SUCCEED to encode a lookup key', async () => {
+      const key = await EIP4430Prototype.encodeLookupKey(1, wallet1.address, '0x12345678');
+      expect(key).to.equal('0xce7a8a69edfee23e')
+    });
   });
 
   /**
@@ -76,25 +82,27 @@ describe(CONTRACT_NAME, function () {
   });
 
   /**
-   * @test setContractMethodMetadata(address target, bytes4 method, bytes4 language, string calldata data)
+   * @test update(address target, bytes4 method, bytes4 language, string calldata description, string[] calldata inputs)
    * -= Expected Behavior =-
    * 1. add `rootPublisher` to the list of publishers
    * 3. emit `RootPublisherAdded` event
    */
-  describe('setContractMethodMetadata(address target, bytes4 method, bytes4 language, string calldata data)', () => {
+  describe('update(address target, bytes4 method, bytes4 language, string calldata description, string[] calldata inputs)', () => {
     // TEST 1
     it('should SUCCEED to EXECUTE from ROOT publisher', async () => {
+      const chainId = 1;
       const target = '0x0000000000000000000000000000000000000001';
       const method = '0xa9059cbb';
       const language = '0x01010101';
-      const data = 'A public goods API endpoint';
+      const description = 'A public goods API endpoint';
+      const inputs = ["test", "test2"];
       const contract = EIP4430Prototype.connect(wallet1);
-      await expect(contract.setContractMethodMetadata(target, method, language, data)).to.emit(
+      await expect(contract.update(chainId, target, method, language, description, inputs)).to.emit(
         EIP4430Prototype,
         'ContractUpdated',
       );
-      const metadata = await EIP4430Prototype.getContractMethodMetadata(target, method, language);
-      expect(metadata.description).to.eql(data);
+      const metadata = await EIP4430Prototype.lookupMetadata(chainId, target, method, language);
+      expect(metadata.description).to.eql(description);
     });
 
     // TEST 2
@@ -108,16 +116,20 @@ describe(CONTRACT_NAME, function () {
       );
 
       // Step 2: Generate Invocation from Delegation & Desired Transaction
+      const chainId = 1;
       const target = '0x0000000000000000000000000000000000000001';
       const method = '0xa9059cbb';
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
+      const inputs = ["test", "test2"];
 
-      const desiredTx = await EIP4430Prototype.populateTransaction.setContractMethodMetadata(
+      const desiredTx = await EIP4430Prototype.populateTransaction.update(
+        chainId,
         target,
         method,
         language,
         description,
+        inputs,
       );
       const signedInvocation = signInvocation(
         signedDelegation,
@@ -129,7 +141,7 @@ describe(CONTRACT_NAME, function () {
 
       // Step 3: Dispatch Invocation from Third-Party Wallet
       await EIP4430Prototype.invoke([signedInvocation]);
-      const metadata = await EIP4430Prototype.getContractMethodMetadata(target, method, language);
+      const metadata = await EIP4430Prototype.lookupMetadata(chainId, target, method, language);
       expect(metadata.description).to.eql(description);
     });
 
@@ -144,16 +156,20 @@ describe(CONTRACT_NAME, function () {
       );
 
       // Step 2: Generate Invocation from Delegation & Desired Transaction
+      const chainId = 1;
       const target = '0x0000000000000000000000000000000000000001';
       const method = '0xa9059cbb';
       const language = '0x01010101';
       const description = 'A public goods API endpoint';
+      const inputs = ["test", "test2"];
 
-      const desiredTx = await EIP4430Prototype.populateTransaction.setContractMethodMetadata(
+      const desiredTx = await EIP4430Prototype.populateTransaction.update(
+        chainId,
         target,
         method,
         language,
         description,
+        inputs,
       );
       const signedInvocation = signInvocation(
         signedDelegation,
