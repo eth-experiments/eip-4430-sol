@@ -72,8 +72,9 @@ contract EIP4430Prototype is Ownable, Delegatable {
 
   /**
    * @notice Smart Contract method metadata
-   * @param function Function signature in the form of a string
-   * @param effects Side-effects of the function in multiple languages.
+   * @param method Function signature in the form of a string
+   * @param description Side-effects of the function in multiple languages.
+   * @param inputs Descriptions of the function inputs.
             -------------------------------------------------------------
             | Language (Hashed) 	| Effect                             	|
             |-------------------	|------------------------------------	|
