@@ -167,14 +167,7 @@ describe(CONTRACT_NAME, function () {
 
     // TEST 3
     it('should REVERT due to REVOKED delegation AUTHORIZATION.', async () => {
-      // Step 1: Sign Delegation
-      const signedDelegation = signDelegation(
-        wallet2.address,
-        EIP4430Prototype,
-        CONTRACT_NAME,
-        account1PrivKey,
-      );
-
+    
       // Step 2: Generate Invocation from Delegation & Desired Transaction
       const chainId = 1;
       const target = '0x0000000000000000000000000000000000000001';
@@ -183,13 +176,19 @@ describe(CONTRACT_NAME, function () {
       const description = 'A public goods API endpoint';
       const inputs = ['test', 'test2'];
 
-      // REVOKE
       const utilOpts = {
         chainId,
         verifyingContract: EIP4430Prototype.address,
         name: CONTRACT_NAME,
       };
       const util = generateUtil(utilOpts);
+      const delegation = {
+        delegate: wallet1.address,
+        authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        caveats: [],
+      };
+      const signedDelegation = util.signDelegation(delegation, account0PrivKey);
+
       // Owner revokes outstanding delegation
       const intentionToRevoke = {
         delegationHash: TypedDataUtils.hashStruct(
@@ -200,7 +199,6 @@ describe(CONTRACT_NAME, function () {
         ),
       };
       const SignedIntentionToRevoke = util.signRevocation(intentionToRevoke, account1PrivKey);
-      console.log(SignedIntentionToRevoke, 'SignedIntentionToRevoke');
       await EIP4430Prototype.revokeDelegation(signedDelegation, SignedIntentionToRevoke);
 
       const desiredTx = await EIP4430Prototype.populateTransaction.update(
