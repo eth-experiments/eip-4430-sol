@@ -1,18 +1,31 @@
 pragma solidity ^0.8.13;
 //SPDX-License-Identifier: MIT
-
+import "hardhat/console.sol";
 import "./CaveatEnforcer.sol";
+import "@openzeppelin/contracts/access/Ownable.sol"; //https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
 import "../Delegatable.sol";
 
-abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
+abstract contract RevokableOwnableDelegatable is Ownable, CaveatEnforcer, Delegatable {
+  constructor(string memory name) Delegatable(name, "1") {}
+
   mapping(bytes32 => bool) isRevoked;
 
   function enforceCaveat(
     bytes calldata terms,
     Transaction calldata transaction,
     bytes32 delegationHash
-  ) public override returns (bool) {
+  ) public view override returns (bool) {
     require(!isRevoked[delegationHash], "Delegation has been revoked");
+
+    // Owner methods are not delegatable in this contract:
+    bytes4 targetSig = bytes4(transaction.data[0:4]);
+
+    // transferOwnership(address newOwner)
+    require(targetSig != 0xf2fde38b, "transferOwnership is not delegatable");
+
+    // renounceOwnership()
+    require(targetSig != 0x79ba79d8, "renounceOwnership is not delegatable");
+
     return true;
   }
 
@@ -22,6 +35,7 @@ abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
   ) public {
     address signer = verifyDelegationSignature(signedDelegation);
     address revocationSigner = verifyIntentionToRevokeSignature(signedIntentionToRevoke);
+    console.log(signer, revocationSigner);
     require(signer == revocationSigner, "Only the signer can revoke a delegation");
 
     bytes32 delegationHash = GET_SIGNEDDELEGATION_PACKETHASH(signedDelegation);
@@ -54,7 +68,7 @@ abstract contract RevocationEnforcer is CaveatEnforcer, Delegatable {
    * This is boilerplate that must be added to any Delegatable contract if it also inherits
    * from another class that also implements _msgSender().
    */
-  function _msgSender() internal view override(Delegatable) returns (address sender) {
+  function _msgSender() internal view override(Delegatable, Context) returns (address sender) {
     if (msg.sender == address(this)) {
       bytes memory array = msg.data;
       uint256 index = msg.data.length;

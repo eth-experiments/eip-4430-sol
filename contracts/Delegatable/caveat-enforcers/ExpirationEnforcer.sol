@@ -6,9 +6,9 @@ import "./CaveatEnforcer.sol";
 contract ExpirationEnforcer is CaveatEnforcer {
   function enforceCaveat(
     bytes memory terms,
-    Transaction memory tx,
-    bytes32 delegationHash
-  ) public override returns (bool) {
+    Transaction memory _transaction,
+    bytes32 _delegationHash
+  ) public view override returns (bool) {
     uint256 limit = bytesToUint(terms);
     require(limit > block.timestamp, "Expiration has passed");
     return true;
