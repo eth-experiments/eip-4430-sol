@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./Delegatable/Delegatable.sol";
+import "./Delegatable/caveat-enforcers/RevokableOwnableDelegatable.sol";
 
 /**                                                               
 _____   ____  __   ___                   _               _      
@@ -44,7 +44,7 @@ PUBLISHERS have AUTHORITY to write CONTRACT metadata storage.
  * @title EIP4430Prototype
  * @dev EIP4430Prototype is a prototype for the EIP4430 transaction description draft.
  */
-contract EIP4430Prototype is Ownable, Delegatable {
+contract EIP4430Prototype is RevokableOwnableDelegatable {
   /**
     @notice Root publishers have authority to publish metadata and delegate publishing authority.
     @dev Delegation is done off-chain using Delegatable.sol OCAP-like signing schema.
@@ -131,7 +131,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
   // -----------------------------------------
   // Constructor
   // -----------------------------------------
-  constructor(address) Delegatable("EIP4430Prototype", "1") {
+  constructor() RevokableOwnableDelegatable("EIP4430Prototype") {
     APPROVED_LANGUAGES[bytes4("EN")] = true;
     APPROVED_LANGUAGES[0x01010101] = true;
   }
@@ -165,7 +165,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
     bytes4 methodId,
     bytes4 language,
     string calldata method
-  ) external isAuthorized {
+  ) external onlyOwner {
     require(APPROVED_LANGUAGES[language], "EIP4430Prototype:language-not-supported");
     bytes8 key = _encodeLookupKey(chainId, target, methodId);
     metadata[key].method = method;
@@ -178,7 +178,7 @@ contract EIP4430Prototype is Ownable, Delegatable {
     bytes4 language,
     string calldata description,
     string[] calldata inputs
-  ) external isAuthorized {
+  ) external onlyOwner {
     require(APPROVED_LANGUAGES[language], "EIP4430Prototype:language-not-supported");
     bytes8 key = _encodeLookupKey(chainId, target, methodId);
     metadata[key].description[language] = description;
@@ -262,18 +262,18 @@ contract EIP4430Prototype is Ownable, Delegatable {
   }
 
   /// @inheritdoc Delegatable
-  function _msgSender() internal view override(Delegatable, Context) returns (address sender) {
-    if (msg.sender == address(this)) {
-      bytes memory array = msg.data;
-      uint256 index = msg.data.length;
-      assembly {
-        // Load the 32 bytes word from memory with the address on the lower 20 bytes, and mask those.
-        sender := and(mload(add(array, index)), 0xffffffffffffffffffffffffffffffffffffffff)
-      }
-    } else {
-      sender = msg.sender;
-    }
-    require(!REVOKED_DELEGATION_AUTHORITY[sender], "EIP4430Prototype:revoked-delegation-authority");
-    return sender;
-  }
+  // function _msgSender() internal view override(Delegatable, Context) returns (address sender) {
+  //   if (msg.sender == address(this)) {
+  //     bytes memory array = msg.data;
+  //     uint256 index = msg.data.length;
+  //     assembly {
+  //       // Load the 32 bytes word from memory with the address on the lower 20 bytes, and mask those.
+  //       sender := and(mload(add(array, index)), 0xffffffffffffffffffffffffffffffffffffffff)
+  //     }
+  //   } else {
+  //     sender = msg.sender;
+  //   }
+  //   require(!REVOKED_DELEGATION_AUTHORITY[sender], "EIP4430Prototype:revoked-delegation-authority");
+  //   return sender;
+  // }
 }

@@ -1,7 +1,7 @@
 const typedMessage = {
   primaryType: "Delegation",
   domain: {
-    name: "DelegatorTest",
+    name: "PhisherRegistery",
     version: "1",
   },
 
@@ -51,6 +51,11 @@ const typedMessage = {
     SignedDelegation: [
       { name: "delegation", type: "Delegation" },
       { name: "signature", type: "bytes" },
+    ],
+    IntentionToRevoke: [{ name: "delegationHash", type: "bytes32" }],
+    SignedIntentionToRevoke: [
+      { name: "signature", type: "bytes" },
+      { name: "intentionToRevoke", type: "IntentionToRevoke" },
     ],
   },
 };
